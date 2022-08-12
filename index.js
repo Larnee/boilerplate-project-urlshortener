@@ -22,7 +22,8 @@ app.get('/api/hello', function(req, res) {
   res.json({ greeting: 'hello API' });
 });
 
-const pairs=[];
+const keyValuePairs=[];
+let key=0;
 
 app.use(bodyParser.urlencoded({ extended: false }));
 
@@ -32,14 +33,11 @@ app.post('/api/shorturl', function(req, res) {
 	dns.lookup(urlObject.hostname, function onLookup(err, address, family) { 
 		if (err) res.json({ error: 'invalid url' });
 		else {
-			const alreadyExists = pairs.filter(p=>p.original_url===urlString);
+			const alreadyExists = keyValuePairs.filter(p=>p.original_url===urlString);
 			if (alreadyExists.length>0) res.json(alreadyExists[0]);
 			else {
-				do {
-					let key = Math.floor(Math.random() * 20000);
-				} while (pairs.filter(p=>p.short_url===key).length>0);
-				const newPair={ original_url : urlString, short_url: key };
-				pairs.push(newPair);
+				const newPair={ original_url : urlString, short_url: ++key };
+				keyValuePairs.push(newPair);
 				res.json(newPair);
 			}
 		}
@@ -47,8 +45,9 @@ app.post('/api/shorturl', function(req, res) {
 });
 
 app.get('/api/shorturl/:key', function(req, res) {
-	const pair=pairs.filter(p=>p.short_url===req.params.key);
+	const pair=keyValuePairs.filter(p=>p.short_url==req.params.key);
 	if(pair.length>0) res.redirect(pair[0].original_url); 
+  else res.json({ error: 'invalid short url' });
 });
 
 app.listen(port, function() {
